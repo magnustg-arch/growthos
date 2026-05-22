@@ -366,6 +366,7 @@ export default function Dashboard() {
 
   const [showAdd, setShowAdd] = useState(false)
   const [showHistory, setShowHistory] = useState(false)
+  const [briefExpanded, setBriefExpanded] = useState(false)
   const [briefLoading, setBriefLoading] = useState(false)
   const [eveningLoading, setEveningLoading] = useState(false)
   const [eveningContent, setEveningContent] = useState('')
@@ -449,7 +450,231 @@ export default function Dashboard() {
   }
 
   return (
-    <div style={{ display: 'flex', minHeight: '100vh', background: pageBg, color: textPrimary }}>
+    <div style={{ minHeight: '100vh', background: pageBg, color: textPrimary, overflowX: 'hidden' }}>
+
+      {/* ══════════════════════════════════════════════════════
+          MOBILE LAYOUT  (hidden on desktop via CSS)
+      ══════════════════════════════════════════════════════ */}
+      <div className="mobile-dashboard">
+
+        {/* ── Hero strip ── */}
+        <div style={{ background: '#13131e', padding: '20px 16px 20px', flexShrink: 0 }}>
+          {/* Row: greeting + ✦ Brief button */}
+          <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
+            <div>
+              <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
+                {profile?.email.split('@')[0]
+                  ? (lang === 'no' ? `Hei, ${profile.email.split('@')[0]} 👋` : `Hey, ${profile.email.split('@')[0]} 👋`)
+                  : (lang === 'no' ? 'Hei 👋' : 'Hey 👋')}
+              </h1>
+              <p style={{ fontSize: 12, color: '#5555a0', marginTop: 3, fontFamily: 'DM Sans, sans-serif' }}>
+                {format(new Date(), lang === 'no' ? 'EEEE d. MMMM' : 'EEEE, MMMM d')}
+              </p>
+            </div>
+            <button
+              onClick={handleGenerateBrief}
+              disabled={briefLoading}
+              style={{
+                background: 'rgba(108,99,255,0.2)', color: '#a0a0ff',
+                border: '1px solid rgba(108,99,255,0.35)', borderRadius: 20,
+                padding: '7px 14px', fontSize: 12, fontWeight: 600,
+                cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0,
+                fontFamily: 'DM Sans, sans-serif', opacity: briefLoading ? 0.7 : 1,
+              }}
+            >
+              {briefLoading ? '…' : '✦ Brief'}
+            </button>
+          </div>
+
+          {/* Stats pills */}
+          <div style={{ display: 'flex', gap: 8, marginTop: 14, flexWrap: 'wrap' }}>
+            {[
+              { icon: '🔥', label: `${profile?.streak ?? 0}d` },
+              { icon: '⚡', label: `Lv.${profile?.level ?? 1}` },
+              { icon: '✅', label: `${completedToday.length}/${todayTotal}${lang === 'no' ? ' i dag' : ' today'}` },
+            ].map(({ icon, label }) => (
+              <div key={label} style={{
+                display: 'flex', alignItems: 'center', gap: 5,
+                background: 'rgba(255,255,255,0.07)',
+                border: '1px solid rgba(255,255,255,0.1)',
+                borderRadius: 20, padding: '5px 12px',
+                fontSize: 12, fontWeight: 600, color: '#c4c4e0',
+              }}>
+                <span>{icon}</span><span>{label}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* XP strip */}
+          <div style={{ marginTop: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+              <span style={{ fontSize: 11, color: '#5555a0', fontFamily: 'Space Mono, monospace', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+                ⚡ {lang === 'no' ? 'Nivå' : 'Level'} {profile?.level ?? 1}
+              </span>
+              <span style={{ fontSize: 11, color: '#5555a0', fontFamily: 'Space Mono, monospace' }}>
+                {xpInCurrentLevel(profile?.xp ?? 0)}/{XP_PER_LEVEL}
+              </span>
+            </div>
+            <div style={{ height: 5, background: 'rgba(255,255,255,0.1)', borderRadius: 99, overflow: 'hidden' }}>
+              <motion.div
+                initial={{ width: 0 }}
+                animate={{ width: `${xpProgressPercent(profile?.xp ?? 0)}%` }}
+                transition={{ duration: 0.9 }}
+                style={{ height: '100%', background: 'linear-gradient(90deg, #6c63ff, #a78bfa)', borderRadius: 99 }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Scrollable content ── */}
+        <div style={{ flex: 1, padding: '14px 16px' }}>
+
+          {/* Claude Brief card (collapsible) */}
+          <div style={{
+            background: '#1a1a2e', borderRadius: 14, marginBottom: 14,
+            border: '1px solid #2a2a48', overflow: 'hidden',
+          }}>
+            <div style={{ height: 3, background: 'linear-gradient(90deg, #6c63ff, rgba(108,99,255,0.2))' }} />
+            <div style={{ padding: '14px 16px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={{ fontFamily: 'Space Mono, monospace', fontSize: 9, color: '#5555a0', letterSpacing: 1.4, textTransform: 'uppercase' }}>
+                  ✦ MORGENMØTE MED CLAUDE
+                </span>
+                <Zap size={12} style={{ color: '#6c63ff' }} />
+              </div>
+              {todayBrief ? (
+                <>
+                  <p style={{ color: '#c4c4e0', fontSize: 13, lineHeight: 1.65, marginBottom: 10 }}>
+                    {briefExpanded
+                      ? todayBrief.content
+                      : (todayBrief.content.indexOf('.') > 20
+                          ? todayBrief.content.slice(0, todayBrief.content.indexOf('.') + 1)
+                          : todayBrief.content.slice(0, 90) + '…')}
+                  </p>
+                  {focusPills.length > 0 && (
+                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+                      {focusPills.map(pill => (
+                        <span key={pill.id} style={{
+                          background: 'rgba(108,99,255,0.15)', color: '#a0a0ff',
+                          border: '1px solid rgba(108,99,255,0.25)',
+                          borderRadius: 99, padding: '3px 10px', fontSize: 11, fontWeight: 500,
+                        }}>
+                          {pillEmoji(pill.title)} {pill.title.length > 16 ? pill.title.slice(0, 16) + '…' : pill.title}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setBriefExpanded(e => !e)}
+                    style={{ background: 'none', border: 'none', color: '#6c63ff', fontSize: 12, fontWeight: 600, cursor: 'pointer', padding: 0, fontFamily: 'DM Sans, sans-serif' }}
+                  >
+                    {briefExpanded
+                      ? (lang === 'no' ? '↑ Vis mindre' : '↑ Show less')
+                      : (lang === 'no' ? '↓ Les mer' : '↓ Read more')}
+                  </button>
+                </>
+              ) : (
+                <p style={{ color: '#4a4a7a', fontSize: 12, fontStyle: 'italic' }}>
+                  {lang === 'no' ? 'Trykk "✦ Brief" for å starte dagen med Claude.' : 'Tap "✦ Brief" to start your day with Claude.'}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* 2×2 progress grid */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginBottom: 16 }}>
+            {[
+              { label: lang === 'no' ? 'Kortsiktige mål' : 'Short-term', value: shortGoals.length > 0 ? `${avgShort}%` : '—', pct: avgShort, color: '#6c63ff', hasData: shortGoals.length > 0 },
+              { label: lang === 'no' ? 'Langsiktige mål' : 'Long-term', value: longGoals.length > 0 ? `${avgLong}%` : '—', pct: avgLong, color: '#f59e0b', hasData: longGoals.length > 0 },
+              { label: lang === 'no' ? 'Dagens oppgaver' : "Today's tasks", value: todayTotal > 0 ? `${completedToday.length}/${todayTotal}` : '—', pct: todayProgress, color: successColor, hasData: todayTotal > 0 },
+              { label: lang === 'no' ? 'Streak' : 'Streak', value: `${profile?.streak ?? 0}d`, pct: Math.min((profile?.streak ?? 0) * 10, 100), color: '#fbbf24', hasData: true },
+            ].map(({ label, value, pct, color, hasData }) => (
+              <div key={label} style={{ background: cardBg, border: `1px solid ${cardBorder}`, borderRadius: 12, padding: '12px 14px' }}>
+                <p style={{ fontSize: 10, color: textMuted, fontFamily: 'Space Mono, monospace', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 6 }}>
+                  {label}
+                </p>
+                <p style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 20, color, marginBottom: 8, lineHeight: 1 }}>
+                  {value}
+                </p>
+                <div style={{ height: 4, background: darkMode ? '#1a1a2e' : '#ece9e2', borderRadius: 99, overflow: 'hidden' }}>
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: hasData ? `${pct}%` : '0%' }}
+                    transition={{ duration: 0.7 }}
+                    style={{ height: '100%', background: color, borderRadius: 99 }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Todo list */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+              <h2 style={{ fontFamily: 'Syne', fontSize: 16, fontWeight: 800, color: textPrimary }}>
+                {lang === 'no' ? 'Oppgaver' : 'Tasks'}
+              </h2>
+              <button
+                onClick={() => setShowAdd(true)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 5,
+                  background: '#6c63ff', color: '#fff', border: 'none',
+                  borderRadius: 8, padding: '6px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                <Plus size={13} /> {lang === 'no' ? 'Legg til' : 'Add'}
+              </button>
+            </div>
+
+            {activeHigh.length > 0 && (
+              <>
+                <SectionLabel dot={PRIORITY_DOT.high} label={lang === 'no' ? 'Høy' : 'High'} count={activeHigh.length} />
+                <AnimatePresence>
+                  {activeHigh.map(todo => (
+                    <TodoRow key={todo.id} todo={todo} darkMode={darkMode} lang={lang}
+                      onComplete={() => completeTodo(todo.id)} onDelete={() => deleteTodo(todo.id)} />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
+
+            {activeMed.length > 0 && (
+              <>
+                <SectionLabel dot={PRIORITY_DOT.medium} label={lang === 'no' ? 'Middels' : 'Medium'} count={activeMed.length} />
+                <AnimatePresence>
+                  {activeMed.map(todo => (
+                    <TodoRow key={todo.id} todo={todo} darkMode={darkMode} lang={lang}
+                      onComplete={() => completeTodo(todo.id)} onDelete={() => deleteTodo(todo.id)} />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
+
+            {activeHigh.length === 0 && activeMed.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: textMuted }}>
+                <p style={{ fontSize: 13 }}>{lang === 'no' ? 'Ingen aktive oppgaver!' : 'No active tasks!'}</p>
+              </div>
+            )}
+
+            {allCompleted.length > 0 && (
+              <>
+                <SectionLabel dot={successColor} label={lang === 'no' ? 'Fullført' : 'Done'} count={allCompleted.length} />
+                <AnimatePresence>
+                  {allCompleted.slice(0, 8).map(todo => (
+                    <TodoRow key={todo.id} todo={todo} darkMode={darkMode} lang={lang}
+                      onComplete={() => {}} onDelete={() => deleteTodo(todo.id)} />
+                  ))}
+                </AnimatePresence>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════
+          DESKTOP LAYOUT  (hidden on mobile via CSS)
+      ══════════════════════════════════════════════════════ */}
+      <div className="desktop-dashboard" style={{ display: 'flex' }}>
 
       {/* ══════════════════════════════════════════
           COLUMN 2 — MAIN CONTENT
@@ -796,7 +1021,9 @@ export default function Dashboard() {
 
       </div>
 
-      {/* Add Todo modal */}
+      </div>{/* end desktop-dashboard */}
+
+      {/* ══ Shared modals (mobile + desktop) ══ */}
       <AnimatePresence>
         {showAdd && (
           <AddTodoModal
