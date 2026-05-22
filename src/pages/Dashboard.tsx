@@ -674,7 +674,7 @@ export default function Dashboard() {
       {/* ══════════════════════════════════════════════════════
           DESKTOP LAYOUT  (hidden on mobile via CSS)
       ══════════════════════════════════════════════════════ */}
-      <div className="desktop-dashboard" style={{ display: 'flex' }}>
+      <div className="desktop-dashboard">
 
       {/* ══════════════════════════════════════════
           COLUMN 2 — MAIN CONTENT
