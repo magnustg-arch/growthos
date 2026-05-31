@@ -463,8 +463,8 @@ export default function Dashboard() {
           <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 4 }}>
             <div>
               <h1 style={{ fontFamily: 'Syne', fontSize: 22, fontWeight: 800, color: '#ffffff', lineHeight: 1.2 }}>
-                {profile?.email.split('@')[0]
-                  ? (lang === 'no' ? `Hei, ${profile.email.split('@')[0]} 👋` : `Hey, ${profile.email.split('@')[0]} 👋`)
+                {profile
+                  ? (lang === 'no' ? `Hei, ${profile.display_name ?? profile.email.split('@')[0]} 👋` : `Hey, ${profile.display_name ?? profile.email.split('@')[0]} 👋`)
                   : (lang === 'no' ? 'Hei 👋' : 'Hey 👋')}
               </h1>
               <p style={{ fontSize: 12, color: '#5555a0', marginTop: 3, fontFamily: 'DM Sans, sans-serif' }}>
@@ -689,8 +689,8 @@ export default function Dashboard() {
         }}>
           <div>
             <h1 style={{ fontFamily: 'Syne', fontSize: 20, fontWeight: 800, lineHeight: 1.2, color: textPrimary }}>
-              {profile?.email.split('@')[0]
-                ? (lang === 'no' ? `Hei, ${profile.email.split('@')[0]} 👋` : `Hey, ${profile.email.split('@')[0]} 👋`)
+              {profile
+                ? (lang === 'no' ? `Hei, ${profile.display_name ?? profile.email.split('@')[0]} 👋` : `Hey, ${profile.display_name ?? profile.email.split('@')[0]} 👋`)
                 : (lang === 'no' ? 'God morgen 👋' : 'Good morning 👋')}
             </h1>
             <p style={{ fontSize: 12, color: textMuted, marginTop: 3, fontFamily: 'DM Sans, sans-serif' }}>

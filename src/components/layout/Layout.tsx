@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { NavLink } from 'react-router-dom'
-import { Home, CheckSquare, Target, MessageCircle, Settings, LogOut } from 'lucide-react'
+import { Home, CheckSquare, Target, MessageCircle, Settings, LogOut, NotebookPen } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import { t } from '../../i18n'
 import LevelUpOverlay from '../gamification/LevelUpOverlay'
@@ -70,6 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     { to: '/', icon: Home, label: t(lang, 'home') },
     { to: '/todos', icon: CheckSquare, label: t(lang, 'todos') },
     { to: '/goals', icon: Target, label: t(lang, 'goals') },
+    { to: '/notes', icon: NotebookPen, label: t(lang, 'notater') },
     { to: '/chat', icon: MessageCircle, label: t(lang, 'chat') },
   ]
 

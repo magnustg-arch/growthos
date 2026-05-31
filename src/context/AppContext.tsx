@@ -33,6 +33,7 @@ interface AppState {
   deleteLongGoal: (id: string) => Promise<void>
   saveTodayBrief: (content: string, type: 'morning' | 'evening') => Promise<void>
   refreshAllBriefs: () => Promise<void>
+  updateDisplayName: (name: string) => Promise<void>
   addHabit: (title: string, priority: Priority) => Promise<void>
   deleteHabit: (id: string) => Promise<void>
   dismissLevelUp: () => void
@@ -255,6 +256,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     await refreshAllBriefs()
   }
 
+  async function updateDisplayName(name: string) {
+    if (!user) return
+    const { data } = await supabase.from('users').update({ display_name: name || null }).eq('id', user.id).select().single()
+    if (data) setProfile(data as UserProfile)
+  }
+
   async function addHabit(title: string, priority: Priority) {
     if (!user) return
     const { data } = await supabase.from('habits').insert({ user_id: user.id, title, priority, last_created_date: null }).select().single()
@@ -282,7 +289,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       completeTodo, deleteTodo, addTodo, updateTodo,
       addShortGoal, updateShortGoal, deleteShortGoal,
       addLongGoal, updateLongGoal, deleteLongGoal,
-      saveTodayBrief, refreshAllBriefs, addHabit, deleteHabit,
+      saveTodayBrief, refreshAllBriefs, updateDisplayName, addHabit, deleteHabit,
       dismissLevelUp: () => setLevelUpAlert(null),
     }}>
       {children}

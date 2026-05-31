@@ -1,12 +1,24 @@
 export interface UserProfile {
   id: string
   email: string
+  display_name: string | null
   language_preference: 'no' | 'en'
   xp: number
   level: number
   streak: number
   last_active_date: string | null
   created_at: string
+}
+
+export interface Note {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  is_pinned: boolean
+  color: string
+  created_at: string
+  updated_at: string
 }
 
 export type Priority = 'high' | 'medium' | 'low'

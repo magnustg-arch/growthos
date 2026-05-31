@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Moon, Sun, Globe, Key, LogOut, Save, Check, Plus, Trash2, RefreshCw } from 'lucide-react'
+import { Moon, Sun, Globe, Key, LogOut, Save, Check, Plus, Trash2, RefreshCw, User } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { t } from '../i18n'
 import { supabase } from '../lib/supabase'
@@ -14,16 +14,24 @@ const PRIORITY_BG: Record<Priority, string> = {
 }
 
 export default function Settings() {
-  const { profile, lang, setLang, darkMode, setDarkMode, user, habits, addHabit, deleteHabit } = useApp()
+  const { profile, lang, setLang, darkMode, setDarkMode, user, habits, addHabit, deleteHabit, updateDisplayName } = useApp()
   const [apiKey, setApiKey] = useState('')
   const [apiKeySaved, setApiKeySaved] = useState(false)
   const [newHabit, setNewHabit] = useState('')
   const [newHabitPriority, setNewHabitPriority] = useState<Priority>('medium')
+  const [displayName, setDisplayName] = useState(profile?.display_name ?? '')
+  const [displayNameSaved, setDisplayNameSaved] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('growthos_apikey')
     if (stored) setApiKey(stored)
   }, [])
+
+  async function saveDisplayName() {
+    await updateDisplayName(displayName.trim())
+    setDisplayNameSaved(true)
+    setTimeout(() => setDisplayNameSaved(false), 2000)
+  }
 
   function saveApiKey() {
     localStorage.setItem('growthos_apikey', apiKey)
@@ -60,6 +68,36 @@ export default function Settings() {
   return (
     <div style={{ maxWidth: 520, margin: '0 auto', padding: '24px 16px 40px' }}>
       <h1 style={{ fontFamily: 'Syne', fontWeight: 800, fontSize: 24, marginBottom: 24 }}>{t(lang, 'settingsTitle')}</h1>
+
+      {/* Profile / Display Name */}
+      <div className="card" style={{ padding: 20, marginBottom: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+          <User size={18} style={{ color: 'var(--primary)' }} />
+          <span style={{ fontWeight: 700, fontSize: 15, fontFamily: 'Syne, sans-serif' }}>
+            {lang === 'no' ? 'Profil' : 'Profile'}
+          </span>
+        </div>
+        <div style={{ display: 'flex', gap: 10 }}>
+          <input
+            placeholder={t(lang, 'displayNamePlaceholder')}
+            value={displayName}
+            onChange={e => setDisplayName(e.target.value)}
+            onBlur={saveDisplayName}
+            onKeyDown={e => { if (e.key === 'Enter') saveDisplayName() }}
+            style={{ ...inputStyle, flex: 1 }}
+          />
+          <button onClick={saveDisplayName}
+            style={{
+              padding: '10px 16px', borderRadius: 10, border: 'none',
+              background: displayNameSaved ? 'var(--success)' : 'var(--primary)',
+              color: '#fff', fontWeight: 600, fontSize: 14, cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: 6, transition: 'background 0.2s', whiteSpace: 'nowrap',
+            }}>
+            {displayNameSaved ? <Check size={16} /> : <Save size={16} />}
+            {displayNameSaved ? (lang === 'no' ? 'Lagret!' : 'Saved!') : t(lang, 'save')}
+          </button>
+        </div>
+      </div>
 
       {/* Appearance */}
       <div className="card" style={{ padding: '4px 20px', marginBottom: 16 }}>
